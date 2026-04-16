@@ -5,19 +5,29 @@ const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer({});
 
 const server = http.createServer((req, res) => {
-  console.log("\n===== HTTP REQUEST =====");
-  console.log(req.method, req.url);
+  console.log("HTTP:", req.method, req.url);
+
+  // ✅ Health check (Fly gọi cái này)
+  if (req.url === "/") {
+    res.writeHead(200);
+    return res.end("OK");
+  }
+
+  // ❗ Chỉ proxy khi là full URL
+  if (!req.url.startsWith("http")) {
+    res.writeHead(400);
+    return res.end("Invalid proxy request");
+  }
 
   proxy.web(req, res, {
-    target: req.url, // forward dynamic luôn
+    target: req.url,
     changeOrigin: true,
   });
 });
 
-// HTTPS tunneling
+// HTTPS CONNECT
 server.on("connect", (req, clientSocket, head) => {
-  console.log("\n===== HTTPS CONNECT =====");
-  console.log("CONNECT to:", req.url);
+  console.log("CONNECT:", req.url);
 
   const { hostname, port } = new URL(`http://${req.url}`);
 
@@ -32,22 +42,13 @@ server.on("connect", (req, clientSocket, head) => {
     clientSocket.pipe(serverSocket);
   });
 
-  serverSocket.on("error", (err) => {
-    console.error("Socket error:", err.message);
+  serverSocket.on("error", () => {
     clientSocket.end();
   });
 });
 
-proxy.on("error", (err, req, res) => {
-  console.error("Proxy error:", err.message);
-  if (res && !res.headersSent) {
-    res.writeHead(500);
-  }
-  res?.end("Proxy error");
-});
-
 const PORT = process.env.PORT || 8080;
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log("Proxy server running on port", PORT);
 });
