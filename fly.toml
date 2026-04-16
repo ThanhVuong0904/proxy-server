@@ -1,2 +1,16 @@
-handlers = ["http"]
-handlers = ["tls"]
+app = "proxy-server-hdb1uq2"
+primary_region = "sin"
+
+[http_service]
+auto_start_machines = true
+auto_stop_machines = true
+force_https = false
+internal_port = 8_080
+min_machines_running = 0
+processes = [ "app" ]
+
+[[vm]]
+cpu_kind = "shared"
+cpus = 1
+memory = "1gb"
+memory_mb = 256
