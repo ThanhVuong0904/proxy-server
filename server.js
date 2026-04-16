@@ -7,6 +7,8 @@ const proxy = httpProxy.createProxyServer({});
 const server = http.createServer((req, res) => {
   console.log("HTTP:", req.method, req.url);
 
+
+  
   // ✅ Health check (Fly gọi cái này)
   if (req.url === "/") {
     res.writeHead(200);
